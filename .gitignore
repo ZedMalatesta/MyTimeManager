@@ -1,0 +1,9 @@
+node_modules/
+npm-debug.log*
+.DS_Store
+.env
+
+# Local board data — personal, never committed
+data/*.json
+data/*.json.bak
+data/*.json.tmp
