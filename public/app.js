@@ -112,7 +112,7 @@ export function buildLane({ scope, columnId, date }) {
   return lane;
 }
 
-export function buildColumn({ title, subtitle, classes = [], lane, onAdd }) {
+export function buildColumn({ title, subtitle, classes = [], lane, onAdd, onRename, onRemove }) {
   const column = document.createElement('section');
   column.className = ['column', ...classes].join(' ');
 
@@ -121,6 +121,10 @@ export function buildColumn({ title, subtitle, classes = [], lane, onAdd }) {
 
   const heading = document.createElement('h2');
   heading.textContent = title;
+  if (onRename) {
+    heading.title = 'Double-click to rename';
+    heading.addEventListener('dblclick', onRename);
+  }
   head.append(heading);
 
   if (subtitle) {
@@ -134,6 +138,16 @@ export function buildColumn({ title, subtitle, classes = [], lane, onAdd }) {
   count.className = 'count';
   count.textContent = String(lane.childElementCount);
   head.append(count);
+
+  if (onRemove) {
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'column-remove';
+    remove.title = 'Delete column';
+    remove.textContent = '×';
+    remove.addEventListener('click', onRemove);
+    head.append(remove);
+  }
 
   column.append(head, lane);
 
@@ -160,10 +174,39 @@ function renderBoardView(container) {
         title: column.title,
         lane,
         onAdd: () => quickAdd({ columnId: column.id }),
+        onRename: () => renameColumn(column),
+        onRemove: () => removeColumn(column),
       }),
     );
   });
+  fragment.append(addColumnButton());
   container.append(fragment);
+}
+
+function addColumnButton() {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'add-column';
+  button.textContent = '+ Add column';
+  button.addEventListener('click', async () => {
+    const title = window.prompt('Column name');
+    if (!title?.trim()) return;
+    await guard(() => api.createColumn(title));
+  });
+  return button;
+}
+
+async function renameColumn(column) {
+  const title = window.prompt('Rename column', column.title);
+  if (!title?.trim() || title === column.title) return;
+  await guard(() => api.renameColumn(column.id, title));
+}
+
+async function removeColumn(column) {
+  const count = state.board.tasks.filter((task) => task.columnId === column.id).length;
+  const warning = count ? `\n\n${count} card(s) will move to the first column.` : '';
+  if (!window.confirm(`Delete column “${column.title}”?${warning}`)) return;
+  await guard(() => api.deleteColumn(column.id));
 }
 
 function renderBacklog() {
@@ -200,24 +243,22 @@ export function registerView(name, renderer) {
 
 /* ---------- mutations ---------- */
 
-export async function applyPatch(id, fields) {
+/** Runs a call that answers with the whole board, then repaints. */
+export async function guard(call) {
   try {
-    state.board = await api.updateTask(id, fields);
+    state.board = await call();
     render();
   } catch (error) {
     toast(error.message);
   }
 }
 
+export const applyPatch = (id, fields) => guard(() => api.updateTask(id, fields));
+
 export async function quickAdd(fields) {
   const title = window.prompt('New task');
   if (!title?.trim()) return;
-  try {
-    state.board = await api.createTask({ ...fields, title });
-    render();
-  } catch (error) {
-    toast(error.message);
-  }
+  await guard(() => api.createTask({ ...fields, title }));
 }
 
 export async function refresh() {
@@ -258,5 +299,37 @@ document.getElementById('backlog-add').addEventListener('click', () => quickAdd(
 document.getElementById('new-task').addEventListener('click', () =>
   quickAdd({ date: state.view === 'board' ? null : state.anchor }),
 );
+
+/**
+ * Shortcuts, ignored while typing: n new task, / filter, t today,
+ * 1/2/3 board, week, day, arrows step the period.
+ */
+document.addEventListener('keydown', (event) => {
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (!document.getElementById('editor-backdrop').hidden) return;
+  const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+  if (typing && event.key !== 'Escape') return;
+
+  const views = { 1: 'board', 2: 'week', 3: 'day' };
+  if (views[event.key]) {
+    state.view = views[event.key];
+    render();
+  } else if (event.key === 'n') {
+    event.preventDefault();
+    document.getElementById('new-task').click();
+  } else if (event.key === '/') {
+    event.preventDefault();
+    document.getElementById('search').focus();
+  } else if (event.key === 't' && state.view !== 'board') {
+    state.anchor = todayISO();
+    render();
+  } else if (event.key === 'ArrowLeft' && state.view !== 'board') {
+    shiftPeriod(-1);
+  } else if (event.key === 'ArrowRight' && state.view !== 'board') {
+    shiftPeriod(1);
+  } else if (event.key === 'Escape') {
+    document.getElementById('search').blur();
+  }
+});
 
 refresh().catch((error) => toast(error.message));

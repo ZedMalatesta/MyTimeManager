@@ -283,3 +283,27 @@ button { font: inherit; cursor: pointer; }
 
 .column.is-past:not(.is-today) { opacity: 0.82; }
 .period[hidden] { display: none; }
+
+.column-remove {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 2px;
+  visibility: hidden;
+}
+.column:hover .column-remove { visibility: visible; }
+.column-remove:hover { color: var(--danger); }
+
+.add-column {
+  flex: 0 0 200px;
+  align-self: flex-start;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+}
+.add-column:hover { color: var(--text); border-color: var(--accent); }

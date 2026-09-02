@@ -1,19 +1,120 @@
 # MyTimeManager
 
-A local, single-user task tracker in the spirit of Trello — drag & drop cards,
-a backlog you can pull from, and dedicated day and week planning views.
+A local, single-user task tracker in the spirit of Trello — drag & drop cards, a
+backlog you pull from, and dedicated **day** and **week** planning views.
 
-Everything lives in one JSON file on your machine. No accounts, no cloud, no
-dependencies beyond Node itself.
+Everything lives in one JSON file on your machine. No account, no cloud, no
+runtime dependencies beyond Node itself.
 
-## Quick start
-
-```bash
-npm start
+```
+┌────────── Board ──────────┬── Week ──┬── Day ──┐   ┌── Backlog ──┐
+│  To do │ In progress │ … │  Mon..Sun │  today  │   │ unscheduled │
+└───────────────────────────┴──────────┴─────────┘   └─────────────┘
 ```
 
-Then open http://localhost:4321
+## Run it
 
-## Status
+```bash
+npm start          # http://127.0.0.1:4321
+npm run dev        # same, restarts on file changes
+```
 
-Work in progress — see the commit history.
+The server binds to loopback only. `PORT`, `HOST` and `MTM_DATA_DIR` override
+the defaults.
+
+## The three views
+
+| View | What it shows | What a drag does |
+| --- | --- | --- |
+| **Board** | every task, grouped by workflow column | changes the column and the order inside it |
+| **Week** | the seven days of the anchored week | reschedules the task to that day |
+| **Day** | one day, split across the columns | pins the task to that day and column |
+
+The **backlog** rail on the right holds everything without a date. Drag a card
+out of it into a day to plan the work; drag one back to unschedule it.
+
+A task therefore has two independent axes — a *column* (its workflow stage) and
+a *date* (when you intend to do it, or nothing at all). Each axis keeps its own
+sort key, so reordering your Tuesday never scrambles the "In progress" column.
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| `n` | new task |
+| `/` | jump to the filter box |
+| `1` `2` `3` | board / week / day |
+| `t` | back to today |
+| `←` `→` | previous / next day or week |
+| `Esc` | close the editor |
+
+Click a card to open the editor (notes, priority, estimate, tags, date, column).
+Double-click a column title to rename it; `×` in its header deletes it and moves
+its cards to the first column.
+
+## Your data
+
+Everything is stored in `data/board.json`, which is git-ignored:
+
+```json
+{
+  "version": 1,
+  "settings": { "weekStartsOn": 1, "title": "MyTimeManager" },
+  "columns": [{ "id": "todo", "title": "To do", "order": 0 }],
+  "tasks": [
+    {
+      "id": "8f3a1c02",
+      "title": "Write the quarterly notes",
+      "notes": "",
+      "columnId": "todo",
+      "date": "2026-09-08",
+      "order": 0,
+      "dayOrder": 2,
+      "priority": "high",
+      "tags": ["writing"],
+      "estimate": 45,
+      "done": false,
+      "createdAt": "…",
+      "updatedAt": "…",
+      "completedAt": null
+    }
+  ]
+}
+```
+
+`date: null` means the task sits in the backlog. Writes go to a temp file and
+are then renamed over the original, so an interrupted save can never leave you
+with a half-written board. A file that fails to parse is moved aside rather than
+overwritten. Editing the JSON by hand is fine — missing fields are filled in on
+the next read. Back it up by copying the file.
+
+## API
+
+The UI talks to a small JSON API; every mutation answers with the full board.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/board` | the whole board |
+| `POST` | `/api/tasks` | create a task |
+| `PATCH` | `/api/tasks/:id` | edit fields |
+| `DELETE` | `/api/tasks/:id` | delete a task |
+| `POST` | `/api/tasks/:id/move` | `{ columnId?, date?, index, scope }` — reorder / reschedule |
+| `POST` `PATCH` `DELETE` | `/api/columns[/:id]` | manage columns |
+
+## Layout
+
+```
+server/    storage.js  atomic JSON persistence, serialized writes
+           api.js      REST routes
+           static.js   public/ file serving
+           index.js    entry point
+public/    app.js      state, board view, chrome wiring
+           views.js    week and day views
+           dnd.js      drag & drop
+           editor.js   task dialog
+           dates.js    local-date helpers
+```
+
+## License
+
+MIT — it's yours.
