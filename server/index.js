@@ -1,5 +1,6 @@
 import http from 'node:http';
 
+import { handleApi } from './api.js';
 import { serveStatic } from './static.js';
 import { DATA_FILE } from './storage.js';
 
@@ -8,6 +9,8 @@ const HOST = process.env.HOST ?? '127.0.0.1'; // personal tool: loopback only
 
 const server = http.createServer(async (req, res) => {
   try {
+    const { pathname } = new URL(req.url, 'http://localhost');
+    if (await handleApi(req, res, pathname)) return;
     if (await serveStatic(req, res)) return;
     res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
     res.end('Not found');
