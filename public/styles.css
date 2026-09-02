@@ -280,3 +280,6 @@ button { font: inherit; cursor: pointer; }
   .backlog { display: none; }
   .search { width: 120px; }
 }
+
+.column.is-past:not(.is-today) { opacity: 0.82; }
+.period[hidden] { display: none; }

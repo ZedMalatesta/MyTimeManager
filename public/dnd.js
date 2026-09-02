@@ -62,9 +62,10 @@ document.addEventListener('drop', async (event) => {
   const card = dragging;
   const index = cardsIn(lane).indexOf(card);
   const scope = lane.dataset.dropScope === 'date' ? 'date' : 'column';
+  // A lane declares whatever it pins down; scope only picks the sort key.
   const move = { index, scope };
-  if (scope === 'date') move.date = lane.dataset.dropDate || null;
-  else move.columnId = lane.dataset.dropColumn;
+  if ('dropDate' in lane.dataset) move.date = lane.dataset.dropDate || null;
+  if ('dropColumn' in lane.dataset) move.columnId = lane.dataset.dropColumn;
 
   finishDrag();
   try {

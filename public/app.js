@@ -1,5 +1,5 @@
 import { api } from './api.js';
-import { relativeDay, todayISO } from './dates.js';
+import { addDays, longDate, relativeDay, todayISO, weekLabel } from './dates.js';
 
 export const state = {
   board: { columns: [], tasks: [], settings: { weekStartsOn: 1 } },
@@ -35,6 +35,18 @@ export function tasksIn({ columnId, date }, sortKey) {
     .filter((task) => (date === undefined || task.date === date))
     .filter(matchesFilter)
     .sort((a, b) => a[sortKey] - b[sortKey] || a.title.localeCompare(b.title));
+}
+
+function periodLabel() {
+  if (state.view === 'week') return weekLabel(state.anchor, state.board.settings.weekStartsOn ?? 1);
+  if (state.view === 'day') return longDate(state.anchor);
+  return '';
+}
+
+/** Steps the anchor date: a day at a time in day view, a week in week view. */
+export function shiftPeriod(direction) {
+  state.anchor = addDays(state.anchor, direction * (state.view === 'week' ? 7 : 1));
+  render();
 }
 
 let toastTimer;
@@ -138,7 +150,7 @@ export function buildColumn({ title, subtitle, classes = [], lane, onAdd }) {
 
 /* ---------- views ---------- */
 
-function renderBoardView() {
+function renderBoardView(container) {
   const fragment = document.createDocumentFragment();
   columnsInOrder().forEach((column) => {
     const lane = buildLane({ scope: 'column', columnId: column.id });
@@ -151,7 +163,7 @@ function renderBoardView() {
       }),
     );
   });
-  el.view.append(fragment);
+  container.append(fragment);
 }
 
 function renderBacklog() {
@@ -172,9 +184,10 @@ const VIEWS = { board: renderBoardView };
 
 export function render() {
   el.view.replaceChildren();
-  (VIEWS[state.view] ?? renderBoardView)();
+  (VIEWS[state.view] ?? renderBoardView)(el.view);
   renderBacklog();
-  el.periodLabel.textContent = state.view === 'board' ? '' : state.anchor;
+  el.periodLabel.textContent = periodLabel();
+  document.getElementById('period-nav').hidden = state.view === 'board';
   document.querySelectorAll('#view-tabs .tab').forEach((tab) => {
     tab.classList.toggle('is-active', tab.dataset.view === state.view);
   });
@@ -230,6 +243,15 @@ document.getElementById('toggle-backlog').addEventListener('click', (event) => {
   state.showBacklog = !state.showBacklog;
   event.currentTarget.setAttribute('aria-pressed', String(state.showBacklog));
   render();
+});
+
+document.getElementById('period-nav').addEventListener('click', (event) => {
+  const action = event.target.closest('button')?.dataset.nav;
+  if (action === 'today') {
+    state.anchor = todayISO();
+    render();
+  } else if (action === 'prev') shiftPeriod(-1);
+  else if (action === 'next') shiftPeriod(1);
 });
 
 document.getElementById('backlog-add').addEventListener('click', () => quickAdd({ date: null }));
