@@ -1,1 +1,87 @@
-<h1>MyTimeManager</h1>
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MyTimeManager</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🗓️</text></svg>" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">◧</span>
+        <h1>MyTimeManager</h1>
+      </div>
+
+      <nav class="views" id="view-tabs" aria-label="Views">
+        <button class="tab is-active" data-view="board" type="button">Board</button>
+        <button class="tab" data-view="week" type="button">Week</button>
+        <button class="tab" data-view="day" type="button">Day</button>
+      </nav>
+
+      <div class="period" id="period-nav">
+        <button class="icon-btn" data-nav="prev" type="button" title="Previous">‹</button>
+        <button class="chip" data-nav="today" type="button">Today</button>
+        <button class="icon-btn" data-nav="next" type="button" title="Next">›</button>
+        <span class="period-label" id="period-label"></span>
+      </div>
+
+      <div class="tools">
+        <input id="search" class="search" type="search" placeholder="Filter tasks…" aria-label="Filter tasks" />
+        <button class="ghost-btn" id="toggle-backlog" type="button" aria-pressed="true">Backlog</button>
+        <button class="primary-btn" id="new-task" type="button">+ Task</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="view" id="view" aria-live="polite"></section>
+
+      <aside class="backlog" id="backlog" aria-label="Backlog">
+        <div class="backlog-head">
+          <h2>Backlog</h2>
+          <span class="count" id="backlog-count">0</span>
+        </div>
+        <p class="backlog-hint">Unscheduled work. Drag a card into a day to plan it.</p>
+        <div class="lane" id="backlog-lane" data-drop-scope="date" data-drop-date=""></div>
+        <button class="add-card" id="backlog-add" type="button">+ Add to backlog</button>
+      </aside>
+    </main>
+
+    <div class="dialog-backdrop" id="editor-backdrop" hidden>
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="editor-title">
+        <h2 id="editor-title">Task</h2>
+        <form id="editor-form">
+          <label>Title<input name="title" required maxlength="200" autocomplete="off" /></label>
+          <label>Notes<textarea name="notes" rows="4" maxlength="5000"></textarea></label>
+          <div class="row">
+            <label>Column
+              <select name="columnId" id="editor-column"></select>
+            </label>
+            <label>Date<input name="date" type="date" /></label>
+          </div>
+          <div class="row">
+            <label>Priority
+              <select name="priority">
+                <option value="low">Low</option>
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+              </select>
+            </label>
+            <label>Estimate (min)<input name="estimate" type="number" min="0" step="5" /></label>
+          </div>
+          <label>Tags <span class="hint">comma separated</span><input name="tags" autocomplete="off" /></label>
+          <label class="check"><input name="done" type="checkbox" /> Done</label>
+          <footer class="dialog-actions">
+            <button type="button" class="danger-btn" id="editor-delete">Delete</button>
+            <span class="spacer"></span>
+            <button type="button" class="ghost-btn" id="editor-cancel">Cancel</button>
+            <button type="submit" class="primary-btn">Save</button>
+          </footer>
+        </form>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+  </body>
+</html>
