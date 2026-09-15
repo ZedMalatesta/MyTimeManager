@@ -1,4 +1,13 @@
-:root {
+/**
+ * Themes are pure token swaps: every rule below reads variables only, so a
+ * theme is this block and nothing else. `:root` carries Midnight, the default;
+ * the two that follow override only what differs. `color-scheme` comes along
+ * so native controls — checkboxes, the date picker, scrollbars — match.
+ */
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
   --bg: #0f1319;
   --bg-raised: #161c25;
   --lane: #1a2029;
@@ -9,11 +18,61 @@
   --muted: #8d9bad;
   --accent: #4c9aff;
   --accent-soft: rgba(76, 154, 255, 0.16);
+  --accent-ink: #05121f;
   --high: #ff7a6b;
   --low: #7bc99a;
   --danger: #e2585b;
+  --danger-soft: rgba(226, 88, 91, 0.12);
+  --scrim: rgba(6, 9, 13, 0.66);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   --radius: 10px;
   --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* Daylight — paper-white, for a lit room. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef1f6;
+  --bg-raised: #ffffff;
+  --lane: #e4e9f0;
+  --card: #ffffff;
+  --card-hover: #f5f8fc;
+  --line: #d3dae4;
+  --text: #1b2432;
+  --muted: #61707f;
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.13);
+  --accent-ink: #ffffff;
+  --high: #d0342c;
+  --low: #0b7a52;
+  --danger: #d0342c;
+  --danger-soft: rgba(208, 52, 44, 0.1);
+  --scrim: rgba(27, 36, 50, 0.38);
+  --card-shadow: 0 1px 2px rgba(27, 36, 50, 0.1);
+  --shadow: 0 6px 20px rgba(27, 36, 50, 0.14);
+}
+
+/* Solarized — the classic warm dark palette, amber accent. */
+:root[data-theme="solarized"] {
+  color-scheme: dark;
+  --bg: #002b36;
+  --bg-raised: #01313e;
+  --lane: #073642;
+  --card: #0a4250;
+  --card-hover: #0e4e5e;
+  --line: #14505e;
+  --text: #93a1a1;
+  --muted: #6d848b;
+  --accent: #b58900;
+  --accent-soft: rgba(181, 137, 0, 0.18);
+  --accent-ink: #002b36;
+  --high: #dc322f;
+  --low: #859900;
+  --danger: #dc322f;
+  --danger-soft: rgba(220, 50, 47, 0.14);
+  --scrim: rgba(0, 20, 26, 0.68);
+  --card-shadow: 0 1px 2px rgba(0, 16, 21, 0.4);
+  --shadow: 0 6px 20px rgba(0, 16, 21, 0.45);
 }
 
 * { box-sizing: border-box; }
@@ -90,10 +149,10 @@ button { font: inherit; cursor: pointer; }
 .icon-btn { padding: 4px 10px; line-height: 1; font-size: 16px; }
 .icon-btn:hover, .chip:hover, .ghost-btn:hover { background: var(--card-hover); }
 .ghost-btn[aria-pressed="false"] { color: var(--muted); }
-.primary-btn { background: var(--accent); border-color: var(--accent); color: #05121f; font-weight: 600; }
+.primary-btn { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .primary-btn:hover { filter: brightness(1.08); }
 .danger-btn { background: transparent; border-color: var(--danger); color: var(--danger); }
-.danger-btn:hover { background: rgba(226, 88, 91, 0.12); }
+.danger-btn:hover { background: var(--danger-soft); }
 
 /* ---------- workspace ---------- */
 
@@ -167,7 +226,7 @@ button { font: inherit; cursor: pointer; }
   border-radius: 8px;
   padding: 8px 10px;
   cursor: grab;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--card-shadow);
 }
 .card:hover { background: var(--card-hover); }
 .card.dragging { opacity: 0.4; cursor: grabbing; }
@@ -220,7 +279,7 @@ button { font: inherit; cursor: pointer; }
 .dialog-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(6, 9, 13, 0.66);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
