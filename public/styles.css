@@ -366,3 +366,14 @@ button { font: inherit; cursor: pointer; }
   text-align: left;
 }
 .add-column:hover { color: var(--text); border-color: var(--accent); }
+
+.theme-picker {
+  background: var(--lane);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 6px 8px;
+  font: inherit;
+}
+.theme-picker:hover { background: var(--card-hover); }
+.theme-picker:focus { outline: none; border-color: var(--accent); }

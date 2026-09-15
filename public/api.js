@@ -14,6 +14,7 @@ export const api = {
   updateTask: (id, fields) => request(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(fields) }),
   deleteTask: (id) => request(`/tasks/${id}`, { method: 'DELETE' }),
   moveTask: (id, move) => request(`/tasks/${id}/move`, { method: 'POST', body: JSON.stringify(move) }),
+  updateSettings: (patch) => request('/settings', { method: 'PATCH', body: JSON.stringify(patch) }),
   createColumn: (title) => request('/columns', { method: 'POST', body: JSON.stringify({ title }) }),
   renameColumn: (id, title) => request(`/columns/${id}`, { method: 'PATCH', body: JSON.stringify({ title }) }),
   deleteColumn: (id) => request(`/columns/${id}`, { method: 'DELETE' }),

@@ -15,6 +15,7 @@ const el = {
   backlogLane: document.getElementById('backlog-lane'),
   backlogCount: document.getElementById('backlog-count'),
   periodLabel: document.getElementById('period-label'),
+  theme: document.getElementById('theme'),
   toast: document.getElementById('toast'),
 };
 
@@ -47,6 +48,13 @@ function periodLabel() {
 export function shiftPeriod(direction) {
   state.anchor = addDays(state.anchor, direction * (state.view === 'week' ? 7 : 1));
   render();
+}
+
+/** The palette lives in the board file, so it follows the data, not the browser. */
+function applyTheme() {
+  const theme = state.board.settings.theme ?? 'dark';
+  document.documentElement.dataset.theme = theme;
+  if (el.theme.value !== theme) el.theme.value = theme;
 }
 
 let toastTimer;
@@ -229,6 +237,7 @@ export function render() {
   el.view.replaceChildren();
   (VIEWS[state.view] ?? renderBoardView)(el.view);
   renderBacklog();
+  applyTheme();
   el.periodLabel.textContent = periodLabel();
   document.getElementById('period-nav').hidden = state.view === 'board';
   document.querySelectorAll('#view-tabs .tab').forEach((tab) => {
@@ -293,6 +302,13 @@ document.getElementById('period-nav').addEventListener('click', (event) => {
     render();
   } else if (action === 'prev') shiftPeriod(-1);
   else if (action === 'next') shiftPeriod(1);
+});
+
+el.theme.addEventListener('change', async (event) => {
+  const theme = event.target.value;
+  document.documentElement.dataset.theme = theme; // repaint now, persist after
+  await guard(() => api.updateSettings({ theme }));
+  el.theme.blur();
 });
 
 document.getElementById('backlog-add').addEventListener('click', () => quickAdd({ date: null }));

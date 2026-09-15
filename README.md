@@ -52,6 +52,21 @@ Click a card to open the editor (notes, priority, estimate, tags, date, column).
 Double-click a column title to rename it; `×` in its header deletes it and moves
 its cards to the first column.
 
+## Themes
+
+Three palettes, picked from the dropdown in the top bar:
+
+| Theme | Looks like |
+| --- | --- |
+| **Midnight** | the default — slate blue, dark |
+| **Daylight** | paper white, for a lit room |
+| **Solarized** | the classic warm dark palette, amber accent |
+
+The choice is saved to `settings.theme` in the board file rather than to browser
+storage, so it travels with your data instead of with the browser you happened
+to use. Every rule in `styles.css` reads CSS variables only, so a new theme is a
+token block plus one entry in `THEMES` in `server/storage.js`.
+
 ## Your data
 
 Everything is stored in `data/board.json`, which is git-ignored:
@@ -59,7 +74,7 @@ Everything is stored in `data/board.json`, which is git-ignored:
 ```json
 {
   "version": 1,
-  "settings": { "weekStartsOn": 1, "title": "MyTimeManager" },
+  "settings": { "weekStartsOn": 1, "title": "MyTimeManager", "theme": "dark" },
   "columns": [{ "id": "todo", "title": "To do", "order": 0 }],
   "tasks": [
     {
@@ -100,6 +115,7 @@ The UI talks to a small JSON API; every mutation answers with the full board.
 | `DELETE` | `/api/tasks/:id` | delete a task |
 | `POST` | `/api/tasks/:id/move` | `{ columnId?, date?, index, scope }` — reorder / reschedule |
 | `POST` `PATCH` `DELETE` | `/api/columns[/:id]` | manage columns |
+| `PATCH` | `/api/settings` | `{ theme?, weekStartsOn?, title? }` |
 
 ## Layout
 
