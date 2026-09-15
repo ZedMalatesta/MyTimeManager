@@ -36,6 +36,7 @@ function seedBoard() {
     createdAt: now,
     updatedAt: now,
     settings: { weekStartsOn: 1, title: 'MyTimeManager', theme: THEMES[0] },
+    history: [],
     columns,
     tasks: [
       {
@@ -58,6 +59,55 @@ function seedBoard() {
   };
 }
 
+/**
+ * A completion event. The log is deliberately denormalized — it copies the
+ * title, tags and column of the moment — so the metrics still read correctly
+ * after the task is deleted, renamed, or its column is gone.
+ */
+function normalizeEvent(event) {
+  if (!event?.completedAt) return null;
+  return {
+    id: String(event.id ?? newId()),
+    taskId: String(event.taskId ?? ''),
+    title: String(event.title ?? 'Untitled task'),
+    tags: Array.isArray(event.tags) ? event.tags.map(String) : [],
+    columnId: String(event.columnId ?? ''),
+    columnTitle: String(event.columnTitle ?? ''),
+    estimate: Number.isFinite(event.estimate) ? event.estimate : null,
+    plannedFor: typeof event.plannedFor === 'string' ? event.plannedFor : null,
+    createdAt: String(event.createdAt ?? event.completedAt),
+    completedAt: String(event.completedAt),
+  };
+}
+
+/** Appends a completion to the log. Called when a task flips to done. */
+export function recordCompletion(board, task) {
+  board.history.push(
+    normalizeEvent({
+      id: newId(),
+      taskId: task.id,
+      title: task.title,
+      tags: task.tags,
+      columnId: task.columnId,
+      columnTitle: board.columns.find((column) => column.id === task.columnId)?.title ?? '',
+      estimate: task.estimate,
+      plannedFor: task.date,
+      createdAt: task.createdAt,
+      completedAt: task.completedAt ?? new Date().toISOString(),
+    }),
+  );
+}
+
+/** Un-checking a task retracts its most recent completion, so a misclick leaves no trace. */
+export function forgetCompletion(board, taskId) {
+  for (let index = board.history.length - 1; index >= 0; index -= 1) {
+    if (board.history[index].taskId === taskId) {
+      board.history.splice(index, 1);
+      return;
+    }
+  }
+}
+
 /** Keeps hand-edited settings inside the range the UI can actually render. */
 function normalizeSettings(settings, defaults) {
   return {
@@ -78,6 +128,7 @@ export function normalize(board) {
     settings: normalizeSettings({ ...base.settings, ...(board?.settings ?? {}) }, base.settings),
     columns: Array.isArray(board?.columns) && board.columns.length ? board.columns : base.columns,
     tasks: Array.isArray(board?.tasks) ? board.tasks : [],
+    history: Array.isArray(board?.history) ? board.history.map(normalizeEvent).filter(Boolean) : [],
   };
 
   out.columns = out.columns.map((column, index) => ({

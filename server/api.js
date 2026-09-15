@@ -1,4 +1,4 @@
-import { THEMES, load, newId, update } from './storage.js';
+import { THEMES, forgetCompletion, load, newId, recordCompletion, update } from './storage.js';
 
 const MAX_BODY = 256 * 1024;
 const PRIORITIES = ['low', 'normal', 'high'];
@@ -65,7 +65,7 @@ function reindex(tasks, key) {
     });
 }
 
-function applyTaskFields(task, patch) {
+function applyTaskFields(task, patch, board) {
   if (typeof patch.title === 'string' && patch.title.trim()) task.title = patch.title.trim().slice(0, 200);
   if (typeof patch.notes === 'string') task.notes = patch.notes.slice(0, 5000);
   if (PRIORITIES.includes(patch.priority)) task.priority = patch.priority;
@@ -78,8 +78,15 @@ function applyTaskFields(task, patch) {
   }
   if ('date' in patch) task.date = cleanDate(patch.date);
   if ('done' in patch) {
-    task.done = Boolean(patch.done);
-    task.completedAt = task.done ? new Date().toISOString() : null;
+    const done = Boolean(patch.done);
+    if (done && !task.done) {
+      task.completedAt = new Date().toISOString();
+      recordCompletion(board, task);
+    } else if (!done && task.done) {
+      forgetCompletion(board, task.id);
+      task.completedAt = null;
+    }
+    task.done = done;
   }
   task.updatedAt = new Date().toISOString();
   return task;
@@ -107,8 +114,8 @@ async function createTask(patch) {
       updatedAt: now,
       completedAt: null,
     };
-    applyTaskFields(task, patch);
     board.tasks.push(task);
+    applyTaskFields(task, patch, board);
     reindex(board.tasks.filter((other) => other.columnId === task.columnId), 'order');
     reindex(board.tasks.filter((other) => other.date === task.date), 'dayOrder');
   });
@@ -170,7 +177,13 @@ async function route(req, res, pathname) {
     }
     if (id && !action && (method === 'PATCH' || method === 'PUT')) {
       const patch = await readBody(req);
-      return json(res, 200, await update((board) => applyTaskFields(findTask(board, id), patch) && undefined));
+      return json(
+        res,
+        200,
+        await update((board) => {
+          applyTaskFields(findTask(board, id), patch, board);
+        }),
+      );
     }
     if (id && !action && method === 'DELETE') {
       return json(
