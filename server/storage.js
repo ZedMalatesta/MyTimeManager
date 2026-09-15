@@ -15,6 +15,9 @@ export const SCHEMA_VERSION = 1;
 
 export const newId = () => randomUUID().slice(0, 8);
 
+/** Palettes defined in public/styles.css; the first one is the default. */
+export const THEMES = ['dark', 'light', 'solarized'];
+
 /**
  * The board a fresh install starts with. Columns model the workflow stage of a
  * task; scheduling (backlog vs. a specific day) is a separate axis stored on
@@ -32,7 +35,7 @@ function seedBoard() {
     version: SCHEMA_VERSION,
     createdAt: now,
     updatedAt: now,
-    settings: { weekStartsOn: 1, title: 'MyTimeManager' },
+    settings: { weekStartsOn: 1, title: 'MyTimeManager', theme: THEMES[0] },
     columns,
     tasks: [
       {
@@ -55,6 +58,16 @@ function seedBoard() {
   };
 }
 
+/** Keeps hand-edited settings inside the range the UI can actually render. */
+function normalizeSettings(settings, defaults) {
+  return {
+    ...settings,
+    title: String(settings.title ?? defaults.title).slice(0, 80) || defaults.title,
+    theme: THEMES.includes(settings.theme) ? settings.theme : defaults.theme,
+    weekStartsOn: [0, 1].includes(settings.weekStartsOn) ? settings.weekStartsOn : defaults.weekStartsOn,
+  };
+}
+
 /** Fills in anything a hand-edited or older board file is missing. */
 export function normalize(board) {
   const base = seedBoard();
@@ -62,7 +75,7 @@ export function normalize(board) {
     version: SCHEMA_VERSION,
     createdAt: board?.createdAt ?? base.createdAt,
     updatedAt: board?.updatedAt ?? base.updatedAt,
-    settings: { ...base.settings, ...(board?.settings ?? {}) },
+    settings: normalizeSettings({ ...base.settings, ...(board?.settings ?? {}) }, base.settings),
     columns: Array.isArray(board?.columns) && board.columns.length ? board.columns : base.columns,
     tasks: Array.isArray(board?.tasks) ? board.tasks : [],
   };

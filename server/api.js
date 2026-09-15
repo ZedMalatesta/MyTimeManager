@@ -1,4 +1,4 @@
-import { load, newId, update } from './storage.js';
+import { THEMES, load, newId, update } from './storage.js';
 
 const MAX_BODY = 256 * 1024;
 const PRIORITIES = ['low', 'normal', 'high'];
@@ -182,6 +182,27 @@ async function route(req, res, pathname) {
         }),
       );
     }
+  }
+
+  if (resource === 'settings' && (method === 'PATCH' || method === 'PUT')) {
+    const patch = await readBody(req);
+    return json(
+      res,
+      200,
+      await update((board) => {
+        if ('theme' in patch) {
+          if (!THEMES.includes(patch.theme)) throw new HttpError(400, `Unknown theme "${patch.theme}"`);
+          board.settings.theme = patch.theme;
+        }
+        if ('weekStartsOn' in patch) {
+          if (![0, 1].includes(patch.weekStartsOn)) throw new HttpError(400, 'weekStartsOn must be 0 or 1');
+          board.settings.weekStartsOn = patch.weekStartsOn;
+        }
+        if (typeof patch.title === 'string' && patch.title.trim()) {
+          board.settings.title = patch.title.trim().slice(0, 80);
+        }
+      }),
+    );
   }
 
   if (resource === 'columns') {
