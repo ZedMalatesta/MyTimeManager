@@ -1,3 +1,4 @@
+import { buildStats } from './stats.js';
 import { THEMES, forgetCompletion, load, newId, recordCompletion, update } from './storage.js';
 
 const MAX_BODY = 256 * 1024;
@@ -168,6 +169,11 @@ async function route(req, res, pathname) {
 
   if (resource === 'board' && method === 'GET') {
     return json(res, 200, await load());
+  }
+
+  if (resource === 'stats' && method === 'GET') {
+    const days = new URL(req.url, 'http://localhost').searchParams.get('days');
+    return json(res, 200, buildStats(await load(), { days }));
   }
 
   if (resource === 'tasks') {
