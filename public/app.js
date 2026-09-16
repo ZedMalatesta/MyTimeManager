@@ -228,7 +228,7 @@ function renderBacklog() {
     el.backlogLane.append(empty);
   }
   el.backlogCount.textContent = String(tasks.length);
-  el.backlog.hidden = !state.showBacklog;
+  el.backlog.hidden = !state.showBacklog || state.view === 'stats';
 }
 
 const VIEWS = { board: renderBoardView };
@@ -238,8 +238,9 @@ export function render() {
   (VIEWS[state.view] ?? renderBoardView)(el.view);
   renderBacklog();
   applyTheme();
+  el.view.classList.toggle('is-stats', state.view === 'stats');
   el.periodLabel.textContent = periodLabel();
-  document.getElementById('period-nav').hidden = state.view === 'board';
+  document.getElementById('period-nav').hidden = !['week', 'day'].includes(state.view);
   document.querySelectorAll('#view-tabs .tab').forEach((tab) => {
     tab.classList.toggle('is-active', tab.dataset.view === state.view);
   });
@@ -326,7 +327,7 @@ document.addEventListener('keydown', (event) => {
   const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
   if (typing && event.key !== 'Escape') return;
 
-  const views = { 1: 'board', 2: 'week', 3: 'day' };
+  const views = { 1: 'board', 2: 'week', 3: 'day', 4: 'stats' };
   if (views[event.key]) {
     state.view = views[event.key];
     render();

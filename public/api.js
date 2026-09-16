@@ -10,6 +10,7 @@ async function request(path, options = {}) {
 
 export const api = {
   board: () => request('/board'),
+  stats: (days) => request(`/stats?days=${encodeURIComponent(days)}`),
   createTask: (fields) => request('/tasks', { method: 'POST', body: JSON.stringify(fields) }),
   updateTask: (id, fields) => request(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(fields) }),
   deleteTask: (id) => request(`/tasks/${id}`, { method: 'DELETE' }),
